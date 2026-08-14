@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#7b2cbf" />
+<title>بازی جمع و تفریق پایه اول</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Tahoma, Arial, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 25%, #a1c4fd 55%, #c2ffd8 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  .app {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+    overflow: hidden;
+    position: relative;
+  }
+  .screen {
+    min-height: 100vh;
+    display: none;
+    padding: 20px 18px 24px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn .35s ease;
+  }
+  .screen.active { display: flex; }
+  @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity:1; transform:none;} }
+
+  /* Character */
+  .character {
+    font-size: 4rem;
+    animation: bounce 1.2s infinite;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .character.wave { animation: wave 1s infinite; }
+  @keyframes wave {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-12deg); }
+    75% { transform: rotate(12deg); }
+  }
+  .bubble {
+    position: relative;
+    background: #fff;
+    border: 3px solid #9d4edd;
+    border-radius: 22px;
+    padding: 12px 18px;
+    max-width: 280px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #3a0ca3;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 18px rgba(0,0,0,.08);
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    bottom: -18px;
+    left: 40%;
+    border: 9px solid transparent;
+    border-top-color: #fff;
+  }
+
+  .title {
+    font-size: 2.1rem;
+    color: #ff4d6d;
+    text-shadow: 2px 2px 0 #fff1a8;
+    line-height: 1.25;
+    margin-bottom: 8px;
+    animation: pop 1s ease infinite;
+  }
+  @keyframes pop { 0%,100%{transform:scale(1);} 50%{transform:scale(1.03);} }
+  .subtitle { font-size: 1rem; color: #5f6caf; margin-bottom: 16px; line-height: 1.8; }
+  .big-emoji { font-size: 3rem; margin: 8px 0 12px; }
+  .card {
+    width: 100%;
+    background: #fff;
+    border-radius: 28px;
+    padding: 18px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.08);
+    border: 3px solid rgba(123,44,191,.15);
+  }
+  .label { display: block; font-size: 1.1rem; color: #7b2cbf; font-weight: 700; margin-bottom: 10px; }
+  .input {
+    width: 100%;
+    padding: 15px 18px;
+    font-size: 1.2rem;
+    border-radius: 999px;
+    border: 3px solid #9d4edd;
+    outline: none;
+    text-align: center;
+    transition: box-shadow .2s;
+  }
+  .input:focus { border-color: #ff4d6d; box-shadow: 0 0 0 4px rgba(255,77,109,.16); }
+
+  .btn {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 15px 18px;
+    margin-top: 12px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, #7b2cbf, #ff4d6d);
+    box-shadow: 0 10px 20px rgba(123,44,191,.25);
+    transition: transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn.secondary { background: linear-gradient(135deg, #00b4d8, #48cae4); }
+  .btn.small { font-size: .95rem; padding: 10px 14px; margin-top: 8px; }
+  .btn.green { background: linear-gradient(135deg, #06d6a0, #2d6a4f); }
+  .btn.blue { background: linear-gradient(135deg, #4361ee, #4cc9f0); }
+
+  /* Difficulty selection */
+  .level-select {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .level-btn {
+    border: 3px solid transparent;
+    border-radius: 20px;
+    padding: 14px 16px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    color: #fff;
+    transition: transform .1s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .level-btn:active { transform: scale(.98); }
+  .level-btn.selected { border: 3px solid #ffd166; box-shadow: 0 0 0 4px rgba(255,209,102,.35); }
+  .level-easy { background: linear-gradient(135deg, #06d6a0, #57cc99); color:#064635; }
+  .level-medium { background: linear-gradient(135deg, #f7b801, #ffd166); color:#5c4400; }
+  .level-hard { background: linear-gradient(135deg, #ff6b6b, #e63946); }
+
+  .topbar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .pill {
+    flex: 1;
+    background: linear-gradient(135deg, #fff, #f8f9fa);
+    border-radius: 16px;
+    padding: 9px 8px;
+    box-shadow: 0 8px 18px rgba(0,0,0,.08);
+    font-weight: 700;
+    color: #3a0ca3;
+    font-size: .9rem;
+  }
+
+  .question-box {
+    width: 100%;
+    background: linear-gradient(135deg, #fdf6ff, #eef7ff);
+    border-radius: 28px;
+    padding: 16px;
+    border: 3px dashed #9d4edd;
+    margin-bottom: 12px;
+  }
+  .question { font-size: 2.4rem; color: #1d3557; font-weight: 900; letter-spacing: 1px; margin: 6px 0 8px; direction: ltr; unicode-bidi: isolate; }
+  .question-emoji { font-size: 1.6rem; }
+  .options { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .option-btn {
+    border: none;
+    border-radius: 24px;
+    padding: 16px 12px;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #fff;
+    box-shadow: 0 10px 18px rgba(0,0,0,.12);
+    min-height: 70px;
+    transition: transform .1s;
+  }
+  .option-btn:nth-child(1) { background: linear-gradient(135deg, #ff6b6b, #ff8fab); }
+  .option-btn:nth-child(2) { background: linear-gradient(135deg, #f7b801, #ffd166); color:#5c4400; }
+  .option-btn:nth-child(3) { background: linear-gradient(135deg, #06d6a0, #8ce99a); color:#064635; }
+  .option-btn:nth-child(4) { background: linear-gradient(135deg, #4cc9f0, #4361ee); }
+  .option-btn:active { transform: scale(.95); }
+  .option-btn.correct-anim { animation: correctPop .6s ease; }
+  .option-btn.wrong-anim { animation: shake .4s ease; }
+  @keyframes correctPop { 0%{transform:scale(1);} 40%{transform:scale(1.12);} 100%{transform:scale(1);} }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 50%{transform:translateX(6px);} 75%{transform:translateX(-4px);} }
+
+  .feedback { min-height: 30px; margin-top: 10px; font-size: 1.1rem; font-weight: 800; }
+  .good { color: #1b8a5a; }
+  .bad { color: #d00000; }
+  .mini { margin-top: 8px; font-size: .9rem; color: #5f6caf; line-height: 1.7; }
+
+  /* Celebration */
+  .confetti {
+    position: absolute;
+    top: -10px;
+    width: 10px;
+    height: 14px;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+  }
+  .confetti.show { animation: fall 2.5s ease-in forwards; }
+  @keyframes fall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Result */
+  .result-big { font-size: 1.8rem; color: #ff4d6d; font-weight: 900; margin: 10px 0; }
+  .result-card {
+    width: 100%;
+    background: #fff;
+    border-radius: 26px;
+    padding: 16px;
+    box-shadow: 0 10px 28px rgba(0,0,0,.1);
+    text-align: right;
+    line-height: 2;
+    font-size: 1.05rem;
+  }
+  .result-card b { color: #3a0ca3; }
+  .result-card .highlight { color: #ff4d6d; }
+  .note {
+    margin-top: 12px;
+    font-size: 1rem;
+    color: #d00000;
+    font-weight: 800;
+    line-height: 1.8;
+    background: #fff3f3;
+    padding: 10px 14px;
+    border-radius: 18px;
+    width: 100%;
+    border: 2px dashed #ff6b6b;
+  }
+  .hidden { display:none !important; }
+
+  /* Level badge on topbar */
+  .level-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #7b2cbf, #ff4d6d);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 800;
+    padding: 5px 10px;
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.2);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Start Screen -->
+  <section id="startScreen" class="screen active">
+    <div class="character" id="startChar">🦊</div>
+    <div class="bubble" id="startBubble">سلام! اسم تو چیست؟ من با تو بازی می‌کنم! 😄</div>
+    <div class="title">بازی جمع و تفریق</div>
+    <div class="subtitle">ویژه پایه اول<br>بازی رنگارنگ، جذاب و مناسب گوشی موبایل</div>
+
+    <div class="card">
+      <label class="label" for="studentName">اسم دانش‌آموز را وارد کن:</label>
+      <input id="studentName" class="input" type="text" placeholder="مثلاً: سارا" maxlength="20" />
+      <div class="mini">یک سطح بازی را انتخاب کن:</div>
+      <div class="level-select">
+        <button class="level-btn level-easy selected" onclick="selectLevel('easy', this)">آسان 🌱 <span>۱ تا ۵</span></button>
+        <button class="level-btn level-medium" onclick="selectLevel('medium', this)">متوسط ⭐ <span>۱ تا ۱۰</span></button>
+        <button class="level-btn level-hard" onclick="selectLevel('hard', this)">سخت 🔥 <span>۱ تا ۲۰</span></button>
+      </div>
+      <button class="btn" onclick="startGame()">شروع بازی ▶</button>
+      <button class="btn secondary small" onclick="showHistory()">🏆 بهترین امتیازها</button>
+    </div>
+  </section>
+
+  <!-- Game Screen -->
+  <section id="gameScreen" class="screen">
+    <div class="topbar">
+      <div class="pill">👤 <span id="showName">-</span></div>
+      <div class="pill">⭐ <span id="score">0</span></div>
+      <div class="pill">⏱️ <span id="time">0</span>s</div>
+    </div>
+
+    <div class="question-box">
+      <div class="question-emoji">🧮✨</div>
+      <div class="question" id="questionText">1 + 1 = ?</div>
+      <div class="mini" id="questionHint">سؤال ۱ از ۱۰</div>
+    </div>
+
+    <div class="options" id="options"></div>
+    <div id="feedback" class="feedback"></div>
+    <button class="btn secondary" onclick="skipQuestion()">سؤال بعدی ➡️</button>
+  </section>
+
+  <!-- Result Screen -->
+  <section id="resultScreen" class="screen">
+    <div class="character" id="resultChar">🎉</div>
+    <div class="title" id="resultTitle">آفرین! بازی تمام شد</div>
+    <div class="result-big">نتیجه نهایی</div>
+
+    <div class="result-card" id="resultCard">
+      <div>نام دانش‌آموز: <b id="resultName">-</b></div>
+      <div>سطح بازی: <b id="resultLevel">-</b></div>
+      <div>امتیاز کسب‌شده: <b class="highlight" id="resultScore">0</b></div>
+      <div>زمان صرف‌شده: <b id="resultTime">0</b> ثانیه</div>
+      <div>تعداد پاسخ درست: <b id="correctCount">0</b></div>
+      <div>تعداد سؤال‌ها: <b id="totalCount">0</b></div>
+      <div>بهترین امتیاز (این سطح): <b id="bestScore">0</b></div>
+    </div>
+
+    <div class="note">📸 از این صفحه عکس بگیر و برای معلمت ارسال کن.</div>
+    <button class="btn" onclick="restartGame()">شروع دوباره 🔄</button>
+    <button class="btn secondary" onclick="goHome()">خانه 🏠</button>
+  </section>
+
+  <!-- History Screen -->
+  <section id="historyScreen" class="screen">
+    <div class="character">🏆</div>
+    <div class="title">بهترین امتیازها</div>
+    <div class="card">
+      <div id="historyContent" class="mini">هنوز بازی نکرده‌ای!</div>
+    </div>
+    <button class="btn secondary" onclick="showScreen('startScreen')">بازگشت به خانه 🏠</button>
+  </section>
+</div>
+
+<script>
+// ==== State ====
+let studentName = '';
+let score = 0;
+let correct = 0;
+let totalQuestions = 10;
+let currentQuestion = 0;
+let timer = 0;
+let timerInterval = null;
+let correctAnswer = 0;
+let answered = false;
+let level = 'easy';
+let questions = [];
+
+// ==== Audio (Web Audio API - no external files) ====
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playTone(freq, duration, type='sine', when=0) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime + when);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + when + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime + when);
+  osc.stop(audioCtx.currentTime + when + duration);
+}
+function playCorrect() { playTone(523.25, 0.15); playTone(659.25, 0.15, 'sine', 0.12); playTone(783.99, 0.25, 'sine', 0.24); }
+function playWrong() { playTone(220, 0.3, 'sawtooth'); }
+function playClick() { playTone(400, 0.08, 'square'); }
+function playWin() {
+  playTone(523.25, 0.15); playTone(659.25, 0.15, 'sine', 0.15);
+  playTone(783.99, 0.15, 'sine', 0.3); playTone(1046.5, 0.4, 'sine', 0.45);
+}
+
+// ==== Local Storage ====
+function getScores() {
+  try { return JSON.parse(localStorage.getItem('bazi_scores') || '{}'); } catch(e) { return {}; }
+}
+function saveScore() {
+  const scores = getScores();
+  if (!scores[level] || score > scores[level]) {
+    scores[level] = score;
+    localStorage.setItem('bazi_scores', JSON.stringify(scores));
+    return true;
+  }
+  return false;
+}
+
+// ==== Screen Navigation ====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ==== Level Selection ====
+function selectLevel(lvl, btn) {
+  level = lvl;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  playClick();
+  const names = { easy: '🌱', medium: '⭐', hard: '🔥' };
+  document.getElementById('startBubble').textContent = `سطح ${names[lvl]} انتخاب شد! آماده‌ای؟ 😄`;
+}
+
+// ==== Question Generation ====
+function generateQuestions() {
+  questions = [];
+  let max, min;
+  if (level === 'easy') { min = 1; max = 5; }
+  else if (level === 'medium') { min = 1; max = 10; }
+  else { min = 1; max = 20; }
+
+  for (let i = 0; i < totalQuestions; i++) {
+    const a = Math.floor(Math.random() * max) + min;
+    const b = Math.floor(Math.random() * max) + min;
+    const isAddition = Math.random() < 0.5;
+    let ans, text;
+    if (isAddition) {
+      ans = a + b;
+      text = `${a} + ${b} = ?`;
+    } else {
+      const x = Math.max(a, b);
+      const y = Math.min(a, b);
+      ans = x - y;
+      text = `${x} - ${y} = ?`;
+    }
+    const options = generateOptions(ans);
+    questions.push({ text, ans, options });
+  }
+}
+
+function generateOptions(ans) {
+  const set = new Set([ans]);
+  while (set.size < 4) {
+    let n = ans + (Math.floor(Math.random() * 7) - 3);
+    if (n < 0) n = Math.abs(n);
+    set.add(n);
+  }
+  return [...set].sort(() => Math.random() - 0.5);
+}
+
+// ==== Game Flow ====
+function startGame() {
+  initAudio();
+  playClick();
+  studentName = document.getElementById('studentName').value.trim();
+  if (!studentName) {
+    alert('لطفاً اسم دانش‌آموز را وارد کن.');
+    return;
+  }
+  document.getElementById('showName').textContent = studentName;
+  score = 0; correct = 0; currentQuestion = 0; timer = 0; answered = false;
+  document.getElementById('score').textContent = score;
+  document.getElementById('time').textContent = timer;
+  generateQuestions();
+  showScreen('gameScreen');
+  startTimer();
+  renderQuestion();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timer++;
+    document.getElementById('time').textContent = timer;
+  }, 1000);
+}
+
+function renderQuestion() {
+  answered = false;
+  document.getElementById('feedback').textContent = '';
+  if (currentQuestion >= totalQuestions) {
+    endGame();
+    return;
+  }
+  const q = questions[currentQuestion];
+  correctAnswer = q.ans;
+  document.getElementById('questionText').textContent = q.text;
+  document.getElementById('questionHint').textContent = `سؤال ${currentQuestion + 1} از ${totalQuestions}`;
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => chooseAnswer(opt, btn);
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function chooseAnswer(choice, btn) {
+  if (answered) return;
+  answered = true;
+  const feedback = document.getElementById('feedback');
+  const buttons = [...document.querySelectorAll('.option-btn')];
+  buttons.forEach(b => b.disabled = true);
+  if (choice === correctAnswer) {
+    score += 10;
+    correct += 1;
+    feedback.textContent = 'آفرین! پاسخ درست بود 🎉';
+    feedback.className = 'feedback good';
+    btn.classList.add('correct-anim');
+    playCorrect();
+    spawnConfetti();
+  } else {
+    feedback.textContent = `اشتباه شد! پاسخ درست: ${correctAnswer}`;
+    feedback.className = 'feedback bad';
+    btn.classList.add('wrong-anim');
+    playWrong();
+  }
+  document.getElementById('score').textContent = score;
+  setTimeout(() => {
+    currentQuestion++;
+    renderQuestion();
+  }, 1000);
+}
+
+function skipQuestion() {
+  if (answered) return;
+  document.getElementById('feedback').textContent = 'این سؤال رد شد ➡️';
+  document.getElementById('feedback').className = 'feedback bad';
+  currentQuestion++;
+  renderQuestion();
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  const isBest = saveScore();
+  playWin();
+  document.getElementById('resultName').textContent = studentName;
+  const levelNames = { easy: 'آسان 🌱', medium: 'متوسط ⭐', hard: 'سخت 🔥' };
+  document.getElementById('resultLevel').textContent = levelNames[level];
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('resultTime').textContent = timer;
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('totalCount').textContent = totalQuestions;
+  const scores = getScores();
+  document.getElementById('bestScore').textContent = scores[level] || 0;
+
+  // Celebration based on score
+  if (correct >= 8) {
+    document.getElementById('resultTitle').textContent = 'فوق‌العاده! تو قهرمانی 🏆';
+    document.getElementById('resultChar').textContent = '🦸‍♂️🎉';
+  } else if (correct >= 5) {
+    document.getElementById('resultTitle').textContent = 'آفرین! خیلی خوب بود 😊';
+    document.getElementById('resultChar').textContent = '🎉🐣';
+  } else {
+    document.getElementById('resultTitle').textContent = 'کارت خوب بود، دوباره تلاش کن 💪';
+    document.getElementById('resultChar').textContent = '🐣';
+  }
+  spawnConfetti(20);
+  showScreen('resultScreen');
+}
+
+// ==== History ====
+function showHistory() {
+  const scores = getScores();
+  const levelNames = { easy: 'آسان 🌱', medium: 'متوسط ⭐', hard: 'سخت 🔥' };
+  const labels = { easy: 'آسان', medium: 'متوسط', hard: 'سخت' };
+  let html = '<div style="text-align:right; line-height:2;">';
+  if (Object.keys(scores).length === 0) {
+    html += 'هنوز بازی نکرده‌ای! بازی کن و بهترین امتیازت را ببین.';
+  } else {
+    for (const [k, v] of Object.entries(scores)) {
+      html += `<div>${levelNames[k]}: <b>${v}</b> امتیاز</div>`;
+    }
+  }
+  html += '</div>';
+  document.getElementById('historyContent').innerHTML = html;
+  showScreen('historyScreen');
+}
+
+// ==== Confetti ====
+function spawnConfetti(count = 15) {
+  const colors = ['#ff6b6b', '#f7b801', '#06d6a0', '#4cc9f0', '#7b2cbf', '#ff8fab'];
+  const app = document.querySelector('.app');
+  for (let i = 0; i < count; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti show';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = Math.random() * 0.6 + 's';
+    app.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+// ==== Restart ====
+function restartGame() {
+  document.getElementById('studentName').value = '';
+  showScreen('startScreen');
+}
+
+function goHome() {
+  document.getElementById('studentName').value = '';
+  showScreen('startScreen');
+}
+
+// Auto-scroll to top on mobile
+window.addEventListener('load', () => window.scrollTo(0, 0));
+
+// Prevent zoom on double-tap for better mobile experience
+document.addEventListener('dblclick', e => e.preventDefault());
+
+// First interaction unlocks audio
+document.addEventListener('touchstart', initAudio, { once: true });
+document.addEventListener('click', initAudio, { once: true });
+</script>
+</body>
+</html>
